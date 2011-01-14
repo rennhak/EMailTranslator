@@ -1,0 +1,7 @@
+
+# from stdin
+echo "This is a test." | ./EMailTranslator.rb -k "MY_GOOGLE_TRANSLATE_API_KEY" -u google -f english -t french
+
+# from CLI argument
+./EMailTranslator.rb -k "MY_GOOGLE_TRANSLATE_API_KEY" -u google -f english -t french -m "This is a test."
+
