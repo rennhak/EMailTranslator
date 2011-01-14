@@ -36,6 +36,9 @@ class EMailTranslator # {{{
 
 
     unless( options.nil? )
+
+      # File.open( "/tmp/dump", "w" ) { |f| f.write @pipe_input  }
+      
       message :success, "Starting #{__FILE__} run"
       message :info, "Colorizing output as requested" if( @options.colorize )
 
@@ -47,8 +50,69 @@ class EMailTranslator # {{{
       #
       ##########
 
+
+      #### FIXME: This is messy quickhack mode, rewrite this properly
+
+      # Remove email header
+      pi      = @pipe_input.split( "\n" )
+
+      header  = []
+      header_end = false
+      pi.collect! do |line|
+        ret_val = line
+
+        unless( header_end )
+          # header
+          header << line
+          ret_val = nil
+        end
+
+        if( header_end == false )
+          header_end = true if( line =~ %r{content-type}i )
+        end
+
+        ret_val
+      end
+
+      pi.compact!
+
+      # remove email addresses and urls
+      pi = pi.join("\n")
+      urls = pi.split(/\s+/).find_all { |u| u =~ /^https?:/ }
+      urls.each { |u| pi.gsub!( u, "<URL WAS NOT SENT TO TRANSLATION SERVICE SEE ORIGINAL MESSAGE>" ) }
+
+
+      # THIS IS NOT WORKING RELIABLY
+      # matching this is not nice, need to hack something together for the RFC
+      # http://www.buildingwebapps.com/articles/79182-validating-email-addresses-with-ruby
+      email_regex = Regexp.new( /^[a-zA-Z][\w\.-]*[a-zA-Z0-9](@[a-zA-Z0-9][\w\.-]*[a-zA-Z0-9]\.[a-zA-Z][a-zA-Z\.]*[a-zA-Z])$/  )
+      emails = pi.scan( email_regex ).uniq.to_a
+      emails.each { |e| pi.gsub!( e.to_s, "<DOMAIN WAS NOT SENT TO TRANSLATION SERVICE SEE ORIGINAL MESSAGE>" ) }
+
+      pi = pi.split( "\n" )
+
+
+      # Google API expects HTML Tags to preserve e.g. newlines
+      @pipe_input = pi.join( "<br>" )
+
+      # File.open( "/tmp/header", "w" ) { |f| f.write header.join("\n").to_s }
+      # File.open( "/tmp/body", "w" ) { |f| f.write @pipe_input }
+      
       google_translate_init if( @options.service == "google" )
-      p translate( ( ( @pipe_input.nil? ) ? ( @options.message ) : ( @pipe_input ) ), @options.from, @options.to )
+      puts ""
+      puts "-------- TRANSLATION BEGIN ---------"
+      puts ""
+      
+      result = translate( ( ( @pipe_input.nil? ) ? ( @options.message ) : ( @pipe_input ) ), @options.from, @options.to )
+      result.gsub!( "<br>", "\n" )
+
+      File.open( "/tmp/translated", "w" ) { |f| f.write result.to_s }
+
+      puts result
+
+      puts ""
+      puts "-------- TRANSLATION END   ---------"
+      puts ""
 
       message :success, "Finished #{__FILE__} run"
     end
@@ -249,7 +313,13 @@ class EMailTranslator # {{{
   # @returns String, with the translated result
   def translate message, from = "japanese", to = "english" # {{{
     # message.translate( to, from )
+    
+    # old version:
     eval "\"#{message}\".from_#{from}_to_#{to}"
+
+    #message.split( "\n" ) do |m|
+    #  eval "\"#{m}\".from_#{from}_to_#{to}"
+    #end
   end # of def translate }}}
 
 
