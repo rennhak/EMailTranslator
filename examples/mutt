@@ -1,0 +1,11 @@
+
+# Copy EMailTranslator.rb e.g. to your ~/bin/. and add this to your .muttrc
+
+
+# Translate filter via "EMailTranslator" ruby script - https://github.com/rennhak/EMailTranslator
+# expects input from STDIN in this config
+
+set japanese_filter='./bin/EMailTranslator -u google -k "MY_KEY_HERE" -f japanese -t english -q' 
+
+macro pager \et ":set display_filter='./bin/EMailTranslator.rb -u google -k "MY_KEY_HERE" -f japanese -t english -q'; exec exit\n:exec display-message\n:unset display_filter;\n" "Translate Message from Japanese to English"
+
