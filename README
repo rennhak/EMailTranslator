@@ -16,6 +16,13 @@ Dependencies:
       That equals roughly 55 pages.
 
 
+WARNING:
+
+In the current version URLs and EMail addresses might be leaked to the translation service.
+Data sanitization is a big todo for the next release. Currently, urls and most email addresses are
+removed but this is not ensured. Use at own risk.
+
+
 License
 -------
 
