@@ -11,6 +11,10 @@ Dependencies:
   o to_lang gem       https://github.com/jimmycuadra/to_lang
 
   o Google Translate API key
+      Limit per day of 100,000 characters (as of 14/01/2011)
+      Using 60 characters per line, 30 lines per page, 1800 characters per page
+      That equals roughly 55 pages.
+
 
 License
 -------
