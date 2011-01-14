@@ -24,6 +24,8 @@ class EMailTranslator # {{{
   def initialize options = nil
     @options = options
 
+    @services = %w[ google ]
+
     # Minimal configuration
     @config               = OpenStruct.new
 
@@ -92,6 +94,18 @@ class EMailTranslator # {{{
       # Boolean switch.
       opts.on("-c", "--colorize", "Colorizes the output of the script for easier reading") do |c|
         options.colorize = c
+      end
+
+      opts.on( "-u", "--use-service NAME", @services, "Use this service for translation (OPT: #{ @services.collect { |n| n.to_s }.join(', ') })" ) do |s|
+        options.service = s
+      end
+
+      opts.on( "-k", "--key STRING", "API Key for the webservice" ) do |k|
+        options.key = k
+      end
+
+      opts.on( "-m", "--message STRING", "Message which should be translated" ) do |m|
+        options.message = m
       end
 
       opts.on_tail("-h", "--help", "Show this message") do
@@ -199,6 +213,16 @@ class EMailTranslator # {{{
     end # of if( @config.colorize )
 
   end # of def message }}}
+
+  
+  # = The translate function is a simple wrapper which takes input arguments and translates
+  # according to from and to
+  # @param from String, indicator from which language we want to translate in natural english, e.g. like in the to_lang gem
+  # @param to String, indicator to which language we want to translate in natural english, e.g. like in the to_lang gem
+  # @returns String, with the translated result
+  def translate from = "japanese", to = "english" # {{{
+    
+  end # of def translate }}}
 
 
 end # of class EMailTranslator }}}
