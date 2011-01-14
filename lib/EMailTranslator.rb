@@ -17,6 +17,9 @@ require 'optparse'
 require 'optparse/time' 
 require 'ostruct'
 
+# = Translation
+require 'to_lang' # google translate
+
 
 # = EMailTranslator is the main class which handles commandline interface and other central tasks
 class EMailTranslator # {{{
@@ -40,6 +43,8 @@ class EMailTranslator # {{{
       #
       ##########
 
+      google_translate_init if( @options.service == "google" )
+      p translate @options.message, @options.from, @options.to
 
       message :success, "Finished #{__FILE__} run"
 
@@ -107,6 +112,15 @@ class EMailTranslator # {{{
       opts.on( "-m", "--message STRING", "Message which should be translated" ) do |m|
         options.message = m
       end
+
+      opts.on( "-f", "--from LANG", "Translate from this language, e.g. english" ) do |f|
+        options.from = f
+      end
+
+      opts.on( "-t", "--to LANG", "Translate to this language, e.g. german" ) do |t|
+        options.to = t
+      end
+
 
       opts.on_tail("-h", "--help", "Show this message") do
         puts opts
@@ -214,14 +228,22 @@ class EMailTranslator # {{{
 
   end # of def message }}}
 
-  
+
+  # = The function google_tranlsate_init initializes the google tranlate api/ to_lang gem
+  def google_translate_init key = @options.key # {{{
+    # here we could e.g. direct json calls instead
+    ToLang.start key
+  end # of def google_tranlsate_init }}}
+
+
   # = The translate function is a simple wrapper which takes input arguments and translates
   # according to from and to
   # @param from String, indicator from which language we want to translate in natural english, e.g. like in the to_lang gem
   # @param to String, indicator to which language we want to translate in natural english, e.g. like in the to_lang gem
   # @returns String, with the translated result
-  def translate from = "japanese", to = "english" # {{{
-    
+  def translate message, from = "japanese", to = "english" # {{{
+    # message.translate( to, from )
+    eval "\"#{message}\".from_#{from}_to_#{to}"
   end # of def translate }}}
 
 
