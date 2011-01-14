@@ -24,10 +24,12 @@ require 'to_lang' # google translate
 # = EMailTranslator is the main class which handles commandline interface and other central tasks
 class EMailTranslator # {{{
 
-  def initialize options = nil
-    @options = options
+  def initialize options = nil, pipe_input = nil
 
-    @services = %w[ google ]
+    @options      = options
+    @pipe_input   = pipe_input.to_s.chomp
+
+    @services     = %w[ google ]
 
     # Minimal configuration
     @config               = OpenStruct.new
@@ -37,6 +39,8 @@ class EMailTranslator # {{{
       message :success, "Starting #{__FILE__} run"
       message :info, "Colorizing output as requested" if( @options.colorize )
 
+      message :info, "Translating from (#{@options.from}) - to (#{@options.to}) - message (#{@options.message}) - pipe_input (#{@pipe_input})"
+
       ####
       #
       # Main Control Flow
@@ -44,10 +48,9 @@ class EMailTranslator # {{{
       ##########
 
       google_translate_init if( @options.service == "google" )
-      p translate @options.message, @options.from, @options.to
+      p translate( ( ( @pipe_input.nil? ) ? ( @options.message ) : ( @pipe_input ) ), @options.from, @options.to )
 
       message :success, "Finished #{__FILE__} run"
-
     end
 
   end # of initialize }}}
@@ -83,8 +86,8 @@ class EMailTranslator # {{{
       end
 
       # Boolean switch.
-      opts.on("-q", "--quiet", "Run quietly, don't output much") do |v|
-        options.verbose = v
+      opts.on("-q", "--quiet", "Run quietly, don't output anything except results") do |q|
+        options.quiet = q
       end
 
       # Boolean switch.
@@ -206,25 +209,28 @@ class EMailTranslator # {{{
 
     raise ArugmentError, "Can't find the corresponding symbol for this message level (#{level.to_s}) - is the spelling wrong?" unless( symbols.key?( level )  )
 
-    if( @options.colorize )
-      if( level == :error )
-        STDERR.puts colorize( "LightRed", "#{symbols[ level ].to_s} #{msg.to_s}" )
+    unless( @options.quiet )
+      if( @options.colorize )
+        if( level == :error )
+          STDERR.puts colorize( "LightRed", "#{symbols[ level ].to_s} #{msg.to_s}" )
+        else
+          STDOUT.puts colorize( "LightGreen", "#{symbols[ level ].to_s} #{msg.to_s}" ) if( level == :success )
+          STDOUT.puts colorize( "LightCyan", "#{symbols[ level ].to_s} #{msg.to_s}" ) if( level == :question )
+          STDOUT.puts colorize( "Brown", "#{symbols[ level ].to_s} #{msg.to_s}" ) if( level == :info )
+          STDOUT.puts colorize( "LightBlue", "#{symbols[ level ].to_s} #{msg.to_s}" ) if( level == :debug and @options.debug )
+        end
       else
-        STDOUT.puts colorize( "LightGreen", "#{symbols[ level ].to_s} #{msg.to_s}" ) if( level == :success )
-        STDOUT.puts colorize( "LightCyan", "#{symbols[ level ].to_s} #{msg.to_s}" ) if( level == :question )
-        STDOUT.puts colorize( "Brown", "#{symbols[ level ].to_s} #{msg.to_s}" ) if( level == :info )
-        STDOUT.puts colorize( "LightBlue", "#{symbols[ level ].to_s} #{msg.to_s}" ) if( level == :debug and @options.debug )
-      end
-    else
-      if( level == :error )
-        STDERR.puts "#{symbols[ level ].to_s} #{msg.to_s}" 
-      else
- 			  STDOUT.puts "#{symbols[ level ].to_s} #{msg.to_s}" if( level == :success )
-        STDOUT.puts "#{symbols[ level ].to_s} #{msg.to_s}" if( level == :question )
-        STDOUT.puts "#{symbols[ level ].to_s} #{msg.to_s}" if( level == :info )
-        STDOUT.puts "#{symbols[ level ].to_s} #{msg.to_s}" if( level == :debug and @options.debug )
-      end
-    end # of if( @config.colorize )
+        if( level == :error )
+          STDERR.puts "#{symbols[ level ].to_s} #{msg.to_s}" 
+        else
+          STDOUT.puts "#{symbols[ level ].to_s} #{msg.to_s}" if( level == :success )
+          STDOUT.puts "#{symbols[ level ].to_s} #{msg.to_s}" if( level == :question )
+          STDOUT.puts "#{symbols[ level ].to_s} #{msg.to_s}" if( level == :info )
+          STDOUT.puts "#{symbols[ level ].to_s} #{msg.to_s}" if( level == :debug and @options.debug )
+        end
+      end # of if( @config.colorize )
+
+    end # of unless( @options.quiet )
 
   end # of def message }}}
 
@@ -253,8 +259,17 @@ end # of class EMailTranslator }}}
 # = Direct invocation
 if __FILE__ == $0
 
-  options = EMailTranslator.new.parse_cmd_arguments( ARGV )
-  box     = EMailTranslator.new( options )
 
+  # Is input currently from tty or from pipe?
+  if( STDIN.tty? )
+    # tty mode
+    options = EMailTranslator.new.parse_cmd_arguments( ARGV )
+    emt     = EMailTranslator.new( options )
+  else
+    # pipe mode
+    input     = STDIN.read
+    options = EMailTranslator.new.parse_cmd_arguments( ARGV )
+    emt     = EMailTranslator.new( options, input )
+  end # of if( STDIN.tty? )
 
 end # of if __FILE__ == $0
