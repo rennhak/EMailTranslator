@@ -1,3 +1,18 @@
+EMail Translator
+-----------------
 
+This simple tool takes different translation services from the web and allows MUA's such as mutt to
+translate E-Mails on the fly. Admittedly this would be possible in a oneliner but that is not really
+maintainable when it gets more complex.
 
-(C) 2009, Bjoern Rennhak, under an MIT licence. http://www.opensource.org/licenses/mit-license.php
+Dependencies:
+
+  o ruby
+  o to_lang gem       https://github.com/jimmycuadra/to_lang
+
+  o Google Translate API key
+
+License
+-------
+
+(C) 2011, Bjoern Rennhak, under a dual license GPLv2 and MIT licence. http://www.opensource.org/licenses/mit-license.php
